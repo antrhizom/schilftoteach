@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weiterbildung to-teach.ai - Checkliste</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Navigation */
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 10px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-link {
+            padding: 8px 16px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .group-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .logout-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+        
+        .card h1, .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        /* Login */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .group-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .group-option {
+            padding: 20px;
+            border: 3px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            font-weight: 600;
+            font-size: 18px;
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .group-option:hover {
+            transform: scale(1.05);
+        }
+        
+        .group-option.selected {
+            border-color: #fff;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+        }
+        
+        .group-option.nilpferde { background: #3498db; }
+        .group-option.ameise { background: #e74c3c; }
+        .group-option.schildkroeten { background: #2ecc71; }
+        .group-option.drachen { background: #f39c12; }
+        .group-option.kuehe { background: #9b59b6; }
+        
+        .group-badge.nilpferde { background: #3498db; }
+        .group-badge.ameise { background: #e74c3c; }
+        .group-badge.schildkroeten { background: #2ecc71; }
+        .group-badge.drachen { background: #f39c12; }
+        .group-badge.kuehe { background: #9b59b6; }
+        
+        /* Buttons */
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+        
+        /* Tasks */
+        .progress-bar-container {
+            margin: 30px 0;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .progress-bar {
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+        }
+        
+        .task-item {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .task-item.completed {
+            background: #e8f5e9;
+            border-color: #4caf50;
+        }
+        
+        .task-header {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+        
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        
+        .task-content {
+            flex: 1;
+        }
+        
+        .task-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .task-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .task-badge.individual {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .task-badge.group {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: white;
+            font-size: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+            }
+            
+            .group-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="loading">Lädt...</div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, get, set, push, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC5WFZHxE19M5lN08cHBD_1P5x2zDuLNHI",
+            authDomain: "weiterbildung-to-teach.firebaseapp.com",
+            databaseURL: "https://weiterbildung-to-teach-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "weiterbildung-to-teach",
+            storageBucket: "weiterbildung-to-teach.firebasestorage.app",
+            messagingSenderId: "316765773128",
+            appId: "1:316765773128:web:7ae13ea61f3e9c2e52677d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // Gruppen
+        const GROUPS = {
+            nilpferde: { name: 'Nilpferde', emoji: '🦛' },
+            ameise: { name: 'Ameise', emoji: '🐜' },
+            schildkroeten: { name: 'Schildkröten', emoji: '🐢' },
+            drachen: { name: 'Drachen', emoji: '🐉' },
+            kuehe: { name: 'Kühe', emoji: '🐄' }
+        };
+
+        // Aufgaben
+        const TASKS = [
+            { id: 1, title: 'Ein KI-Chatbot steht zur Verfügung', type: 'individual', description: '□ Ich habe Zugriff auf den KI-Chat von Microsoft.\n□ Ich weiss, dass ich den Input genau definieren muss.' },
+            { id: 2, title: 'Registrierung Schullizenz', type: 'individual', description: '□ Ich bin bei Fobizz registriert.\n□ Ich habe den Pro-Plan in to-teach.ai' },
+            { id: 3, title: 'Erste Schritte in to-teach.ai', type: 'individual', description: '□ Ich habe ein Youtube-Aufgabenblatt erstellt\n□ Ich habe eine Powerpoint erstellt\n□ Ich habe eine Infografik erstellt' },
+            { id: 4, title: 'Gruppenarbeit A', type: 'group', description: '□ Zwischenstandkontrolle in der Gruppe' },
+            { id: 5, title: 'Aufgabenbausteine kennenlernen', type: 'individual', description: '□ Ich habe den Baustein „Aussagen" erstellt\n□ Ich habe den Baustein „Mindmap" erstellt\n□ Ich habe den Baustein „Whatsapp Chat" erstellt' },
+            { id: 6, title: 'Organisation von to-teach.ai-Inhalten', type: 'individual', description: '□ Ich habe zwei Ordner erstellt\n□ Ich habe einen Kurs erstellt' },
+            { id: 7, title: 'Gruppenarbeit B', type: 'group', description: '□ Zwischenstandkontrolle in der Gruppe' },
+            { id: 8, title: 'Gruppenarbeit C', type: 'group', description: '□ Entscheid in der Gruppe, welche Links auf das Padlet kommen' }
+        ];
+
+        // State
+        let currentUser = null;
+        let currentPage = 'login';
+        let completedTasks = {};
+        let allUsers = [];
+
+        // Init
+        function init() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                currentPage = 'checkliste';
+                loadUserData();
+            }
+            render();
+        }
+
+        // Load user data
+        async function loadUserData() {
+            if (!currentUser) return;
+            try {
+                const userRef = ref(database, `users/${currentUser.userId}`);
+                const snapshot = await get(userRef);
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    completedTasks = data.completedTasks || {};
+                }
+            } catch (err) {
+                console.error('Fehler:', err);
+            }
+        }
+
+        // Login
+        async function handleLogin(username, group) {
+            if (!username || !group) {
+                return 'Bitte Namen und Gruppe auswählen';
+            }
+
+            try {
+                const usersRef = ref(database, 'users');
+                const snapshot = await get(usersRef);
+                
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    const exists = Object.values(users).some(
+                        u => u.username.toLowerCase() === username.toLowerCase()
+                    );
+                    if (exists) {
+                        return 'Name bereits vergeben';
+                    }
+                }
+
+                const userId = Date.now().toString();
+                const newUser = {
+                    username: username.trim(),
+                    group: group,
+                    createdAt: new Date().toISOString(),
+                    completedTasks: {},
+                    ratings: {}
+                };
+
+                await set(ref(database, `users/${userId}`), newUser);
+                
+                currentUser = { ...newUser, userId };
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                currentPage = 'checkliste';
+                completedTasks = {};
+                render();
+                return null;
+            } catch (err) {
+                console.error(err);
+                return 'Fehler beim Anmelden';
+            }
+        }
+
+        // Logout
+        function handleLogout() {
+            if (confirm('Wirklich abmelden?')) {
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+                currentPage = 'login';
+                completedTasks = {};
+                render();
+            }
+        }
+
+        // Toggle Task
+        async function toggleTask(taskId) {
+            const newCompleted = { ...completedTasks };
+            
+            if (newCompleted[taskId]) {
+                delete newCompleted[taskId];
+            } else {
+                newCompleted[taskId] = new Date().toISOString();
+            }
+
+            completedTasks = newCompleted;
+            
+            try {
+                await set(ref(database, `users/${currentUser.userId}/completedTasks`), newCompleted);
+            } catch (err) {
+                console.error(err);
+            }
+            
+            render();
+        }
+
+        // Render
+        function render() {
+            const app = document.getElementById('app');
+            
+            if (!currentUser) {
+                app.innerHTML = renderLogin();
+                attachLoginListeners();
+            } else {
+                app.innerHTML = renderNav() + renderContent();
+                attachNavListeners();
+                attachContentListeners();
+            }
+        }
+
+        // Render Login
+        function renderLogin() {
+            return `
+                <div class="container">
+                    <div class="card" style="max-width: 600px; margin: 50px auto;">
+                        <h1>🎓 Willkommen zur to-teach.ai Weiterbildung</h1>
+                        <p style="margin-bottom: 30px; color: #666;">
+                            Bitte melde dich an, um mit der Checkliste zu beginnen.
+                        </p>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label>Dein Name</label>
+                                <input type="text" id="username" placeholder="Max Mustermann" maxlength="30" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Wähle deine Gruppe</label>
+                                <div class="group-grid" id="groupGrid">
+                                    ${Object.entries(GROUPS).map(([id, g]) => `
+                                        <div class="group-option ${id}" data-group="${id}">
+                                            <div style="font-size: 32px; margin-bottom: 5px;">${g.emoji}</div>
+                                            <div>${g.name}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <input type="hidden" id="selectedGroup" required>
+                            </div>
+                            <div id="loginError" class="error-message"></div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                                Anmelden
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Attach login listeners
+        function attachLoginListeners() {
+            let selectedGroup = null;
+            
+            document.querySelectorAll('.group-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    document.querySelectorAll('.group-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    selectedGroup = opt.dataset.group;
+                    document.getElementById('selectedGroup').value = selectedGroup;
+                });
+            });
+            
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const group = document.getElementById('selectedGroup').value;
+                const errorDiv = document.getElementById('loginError');
+                
+                const error = await handleLogin(username, group);
+                if (error) {
+                    errorDiv.textContent = error;
+                } else {
+                    errorDiv.textContent = '';
+                }
+            });
+        }
+
+        // Render Nav
+        function renderNav() {
+            return `
+                <div class="container">
+                    <nav class="nav">
+                        <div class="nav-links">
+                            <div class="nav-link ${currentPage === 'checkliste' ? 'active' : ''}" data-page="checkliste">
+                                📋 Checkliste
+                            </div>
+                            <div class="nav-link ${currentPage === 'statistik' ? 'active' : ''}" data-page="statistik">
+                                📊 Statistik
+                            </div>
+                            <div class="nav-link ${currentPage === 'pinnwand' ? 'active' : ''}" data-page="pinnwand">
+                                📌 Pinnwand
+                            </div>
+                        </div>
+                        <div class="user-info">
+                            <span style="font-weight: 600;">${currentUser.username}</span>
+                            <span class="group-badge ${currentUser.group}">
+                                ${GROUPS[currentUser.group]?.emoji} ${GROUPS[currentUser.group]?.name}
+                            </span>
+                            <button class="logout-btn" id="logoutBtn">Abmelden</button>
+                        </div>
+                    </nav>
+                </div>
+            `;
+        }
+
+        // Attach nav listeners
+        function attachNavListeners() {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    currentPage = link.dataset.page;
+                    render();
+                });
+            });
+            
+            document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+        }
+
+        // Render Content
+        function renderContent() {
+            if (currentPage === 'checkliste') return renderCheckliste();
+            if (currentPage === 'statistik') return renderStatistik();
+            if (currentPage === 'pinnwand') return renderPinnwand();
+            return '';
+        }
+
+        // Render Checkliste
+        function renderCheckliste() {
+            const completed = Object.keys(completedTasks).length;
+            const total = TASKS.length;
+            const percentage = Math.round((completed / total) * 100);
+            
+            return `
+                <div class="container">
+                    <div class="card">
+                        <h1>📋 Checkliste</h1>
+                        <div class="progress-bar-container">
+                            <div class="progress-info">
+                                <span>Dein Fortschritt: ${completed} / ${total} Aufgaben</span>
+                                <span style="color: #667eea; font-size: 18px;">${percentage}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${percentage}%"></div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 30px;">
+                            ${TASKS.map((task, i) => `
+                                <div class="task-item ${completedTasks[task.id] ? 'completed' : ''}">
+                                    <div class="task-header">
+                                        <input type="checkbox" class="task-checkbox" data-task="${task.id}" 
+                                               ${completedTasks[task.id] ? 'checked' : ''}>
+                                        <div class="task-content">
+                                            <div class="task-title">
+                                                ${i + 1}. ${task.title}
+                                                <span class="task-badge ${task.type}">
+                                                    ${task.type === 'group' ? '👥 Gruppenarbeit' : '🦁 Einzelarbeit'}
+                                                </span>
+                                            </div>
+                                            <div style="color: #666; font-size: 14px; white-space: pre-line;">
+                                                ${task.description}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render Statistik
+        function renderStatistik() {
+            return `
+                <div class="container">
+                    <div class="card">
+                        <h1>📊 Statistik</h1>
+                        <p style="color: #666;">Die Statistik-Funktion wird geladen...</p>
+                        <p style="margin-top: 20px;">Hier siehst du bald den Fortschritt aller Teilnehmer!</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render Pinnwand
+        function renderPinnwand() {
+            return `
+                <div class="container">
+                    <div class="card">
+                        <h1>📌 Pinnwand</h1>
+                        <p style="color: #666;">Die Pinnwand wird geladen...</p>
+                        <p style="margin-top: 20px;">Hier kannst du bald Kommentare schreiben!</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Attach content listeners
+        function attachContentListeners() {
+            document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    toggleTask(parseInt(e.target.dataset.task));
+                });
+            });
+        }
+
+        // Start app
+        init();
+    </script>
+</body>
+</html>

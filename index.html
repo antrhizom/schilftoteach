@@ -1010,9 +1010,6 @@
                                         </div>
                                         <div>
                                             <span class="comment-date">${new Date(comment.timestamp).toLocaleString('de-DE')}</span>
-                                            ${comment.userId === currentUser.userId ? `
-                                                <button class="delete-comment-btn" data-comment="${comment.id}">Löschen</button>
-                                            ` : ''}
                                         </div>
                                     </div>
                                     <div class="comment-text">${comment.text}</div>
@@ -1093,12 +1090,6 @@
                     postComment(text);
                     document.getElementById('newComment').value = '';
                 }
-            });
-
-            document.querySelectorAll('.delete-comment-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    deleteComment(btn.dataset.comment);
-                });
             });
         }
 

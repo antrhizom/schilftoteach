@@ -27,8 +27,8 @@
         .form-group input, .form-group textarea { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         .group-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin: 20px 0; }
         .group-option { padding: 20px; border: 3px solid transparent; border-radius: 10px; cursor: pointer; text-align: center; font-weight: 600; font-size: 18px; color: white; transition: all 0.3s; }
-        .group-option:hover { transform: scale(1.05); }
-        .group-option.selected { border-color: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5); }
+        .group-option:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
+        .group-option.selected { border-color: #fff; box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5), 0 4px 20px rgba(0, 0, 0, 0.3); transform: scale(1.08); }
         .group-option.nilpferde { background: #3498db; }
         .group-option.ameise { background: #e74c3c; }
         .group-option.schildkroeten { background: #2ecc71; }
@@ -287,7 +287,11 @@
                 };
 
                 await set(ref(database, `users/${userId}`), newUser);
+                
+                // Speichere den Code temporär und den User
                 newUserCode = code;
+                currentUser = { ...newUser, userId };
+                
                 render();
                 return null;
             } catch (err) {
@@ -435,6 +439,16 @@
             if (!currentUser) {
                 app.innerHTML = renderLogin();
                 attachLoginListeners();
+            } else if (newUserCode) {
+                // Zeige Code-Anzeige
+                app.innerHTML = renderLogin();
+                // Füge Listener für Continue-Button hinzu
+                document.getElementById('continueToApp')?.addEventListener('click', () => {
+                    localStorage.setItem('currentUserId', currentUser.userId);
+                    newUserCode = null;
+                    currentPage = 'checkliste';
+                    render();
+                });
             } else {
                 app.innerHTML = renderNav() + renderContent() + (showRatingModal ? renderRatingModal() : '');
                 attachNavListeners();
@@ -459,7 +473,7 @@
                                     Du benötigst ihn zum Anmelden auf anderen Geräten
                                 </div>
                             </div>
-                            <button class="btn btn-primary" style="width: 100%;" onclick="location.reload()">
+                            <button class="btn btn-primary" style="width: 100%;" id="continueToApp">
                                 Weiter zur Checkliste
                             </button>
                         </div>

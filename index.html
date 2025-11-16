@@ -116,6 +116,26 @@
         .comment-date { font-size: 12px; color: #999; }
         .delete-comment-btn { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px; }
         .loading { text-align: center; padding: 50px; color: white; font-size: 20px; }
+        .group-filter { display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; align-items: center; }
+        .group-filter-label { font-weight: 600; color: #333; }
+        .group-filter-badge { padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; color: white; cursor: pointer; transition: all 0.3s; border: 3px solid transparent; }
+        .group-filter-badge:hover { transform: scale(1.05); }
+        .group-filter-badge.active { border-color: white; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3), 0 4px 12px rgba(0, 0, 0, 0.2); }
+        .group-filter-badge.all { background: #667eea; }
+        .rating-stats { margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; }
+        .rating-stats-header { font-weight: 600; margin-bottom: 15px; color: #667eea; display: flex; justify-content: space-between; align-items: center; }
+        .rating-question-stats { margin-bottom: 20px; }
+        .rating-question-label { font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .rating-bar-group { display: flex; gap: 5px; margin-bottom: 5px; }
+        .rating-bar-item { flex: 1; text-align: center; }
+        .rating-bar-visual { height: 30px; border-radius: 5px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px; transition: all 0.3s; }
+        .rating-bar-visual:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+        .rating-bar-visual.positive { background: #4caf50; }
+        .rating-bar-visual.negative { background: #f44336; }
+        .rating-bar-visual.neutral { background: #999; }
+        .rating-bar-label { font-size: 12px; color: #666; margin-top: 5px; }
+        .anonymous-note { background: #fff3e0; border-left: 4px solid #f39c12; padding: 12px 15px; border-radius: 5px; margin-bottom: 15px; font-size: 14px; color: #666; }
+        .anonymous-note strong { color: #f39c12; }
         @media (max-width: 768px) {
             .nav { flex-direction: column; }
             .group-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
@@ -191,6 +211,7 @@
         let showRatingModal = null;
         let tempRating = {};
         let newUserCode = null;
+        let selectedGroupFilter = null; // null = alle Gruppen
 
         async function init() {
             const savedUserId = localStorage.getItem('currentUserId');
@@ -722,6 +743,11 @@
         }
 
         function renderStatistik() {
+            // Filtere Benutzer basierend auf ausgewählter Gruppe
+            const filteredUsers = selectedGroupFilter 
+                ? allUsers.filter(u => u.group === selectedGroupFilter)
+                : allUsers;
+
             const groupStats = {};
             Object.keys(GROUPS).forEach(g => {
                 const groupUsers = allUsers.filter(u => u.group === g);
@@ -743,11 +769,30 @@
 
             let allSubtasksCount = 0;
             TASKS.forEach(t => allSubtasksCount += t.subtasks.length);
+
+            const filterLabel = selectedGroupFilter 
+                ? `${GROUPS[selectedGroupFilter].emoji} ${GROUPS[selectedGroupFilter].name}`
+                : 'Alle Gruppen';
             
             return `
                 <div class="container">
                     <div class="card">
                         <h1>📊 Statistik-Übersicht</h1>
+                        
+                        <div class="group-filter">
+                            <span class="group-filter-label">Filter:</span>
+                            <div class="group-filter-badge all ${!selectedGroupFilter ? 'active' : ''}" data-group="all">
+                                🌍 Alle Gruppen
+                            </div>
+                            ${Object.entries(GROUPS).map(([id, g]) => `
+                                <div class="group-filter-badge ${selectedGroupFilter === id ? 'active' : ''}" 
+                                     style="background: ${g.color};" 
+                                     data-group="${id}">
+                                    ${g.emoji} ${g.name}
+                                </div>
+                            `).join('')}
+                        </div>
+
                         <div class="stats-grid">
                             ${Object.entries(GROUPS).map(([id, g]) => `
                                 <div class="stat-card" style="border-color: ${g.color};">
@@ -763,13 +808,23 @@
                     </div>
 
                     <div class="card">
-                        <h2>📈 Detaillierte Aufgabenstatistik</h2>
+                        <h2>📈 Detaillierte Aufgabenstatistik - ${filterLabel}</h2>
+                        <div class="anonymous-note">
+                            <strong>🔒 Hinweis:</strong> Alle Bewertungen werden anonymisiert angezeigt, um die Privatsphäre der Teilnehmer zu schützen.
+                        </div>
                         <div class="task-stats">
                             ${TASKS.map((task, idx) => {
-                                let taskStats = { total: allUsers.length, completed: 0 };
-                                let subtaskStats = task.subtasks.map(() => ({ total: allUsers.length, completed: 0 }));
+                                let taskStats = { total: filteredUsers.length, completed: 0 };
+                                let subtaskStats = task.subtasks.map(() => ({ total: filteredUsers.length, completed: 0 }));
                                 
-                                allUsers.forEach(user => {
+                                // Sammle Bewertungen für diese Aufgabe
+                                let ratingStats = {
+                                    enjoyed: { yes: 0, no: 0, total: 0 },
+                                    useful: { yes: 0, no: 0, total: 0 },
+                                    learned: { yes: 0, no: 0, total: 0 }
+                                };
+
+                                filteredUsers.forEach(user => {
                                     let userTaskCompleted = true;
                                     task.subtasks.forEach((_, subIdx) => {
                                         const key = getSubtaskKey(task.id, subIdx);
@@ -780,6 +835,21 @@
                                         }
                                     });
                                     if (userTaskCompleted) taskStats.completed++;
+
+                                    // Sammle Bewertungen
+                                    if (user.ratings && user.ratings[task.id]) {
+                                        const rating = user.ratings[task.id];
+                                        RATING_QUESTIONS.forEach(q => {
+                                            if (rating[q.id] !== null && rating[q.id] !== undefined) {
+                                                ratingStats[q.id].total++;
+                                                if (rating[q.id]) {
+                                                    ratingStats[q.id].yes++;
+                                                } else {
+                                                    ratingStats[q.id].no++;
+                                                }
+                                            }
+                                        });
+                                    }
                                 });
 
                                 const taskPercentage = taskStats.total > 0 ? Math.round((taskStats.completed / taskStats.total) * 100) : 0;
@@ -806,6 +876,44 @@
                                                 `;
                                             }).join('')}
                                         </div>
+
+                                        ${ratingStats.enjoyed.total > 0 || ratingStats.useful.total > 0 || ratingStats.learned.total > 0 ? `
+                                            <div class="rating-stats">
+                                                <div class="rating-stats-header">
+                                                    <span>📊 Anonymisierte Bewertungen</span>
+                                                    <span style="font-size: 14px; color: #999;">${Math.max(ratingStats.enjoyed.total, ratingStats.useful.total, ratingStats.learned.total)} Bewertungen</span>
+                                                </div>
+                                                ${RATING_QUESTIONS.map(q => {
+                                                    const stats = ratingStats[q.id];
+                                                    if (stats.total === 0) return '';
+                                                    
+                                                    const yesPercent = Math.round((stats.yes / stats.total) * 100);
+                                                    const noPercent = Math.round((stats.no / stats.total) * 100);
+                                                    
+                                                    return `
+                                                        <div class="rating-question-stats">
+                                                            <div class="rating-question-label">
+                                                                ${q.emoji} ${q.label}
+                                                            </div>
+                                                            <div class="rating-bar-group">
+                                                                <div class="rating-bar-item" style="flex: ${stats.yes || 1};">
+                                                                    <div class="rating-bar-visual positive" style="opacity: ${stats.yes > 0 ? 1 : 0.3};">
+                                                                        ${stats.yes > 0 ? `${stats.yes} (${yesPercent}%)` : '0'}
+                                                                    </div>
+                                                                    <div class="rating-bar-label">👍 Ja</div>
+                                                                </div>
+                                                                <div class="rating-bar-item" style="flex: ${stats.no || 1};">
+                                                                    <div class="rating-bar-visual negative" style="opacity: ${stats.no > 0 ? 1 : 0.3};">
+                                                                        ${stats.no > 0 ? `${stats.no} (${noPercent}%)` : '0'}
+                                                                    </div>
+                                                                    <div class="rating-bar-label">👎 Nein</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    `;
+                                                }).join('')}
+                                            </div>
+                                        ` : ''}
                                     </div>
                                 `;
                             }).join('')}
@@ -813,9 +921,9 @@
                     </div>
 
                     <div class="card">
-                        <h2>👥 Alle Teilnehmer (${allUsers.length})</h2>
+                        <h2>👥 Teilnehmer - ${filterLabel} (${filteredUsers.length})</h2>
                         <div class="user-list">
-                            ${allUsers.length === 0 ? '<p style="color: #999;">Noch keine Teilnehmer</p>' : allUsers.map(user => {
+                            ${filteredUsers.length === 0 ? '<p style="color: #999;">Keine Teilnehmer in dieser Gruppe</p>' : filteredUsers.map(user => {
                                 let userCompleted = 0;
                                 TASKS.forEach(task => {
                                     task.subtasks.forEach((_, i) => {
@@ -914,6 +1022,15 @@
         }
 
         function attachContentListeners() {
+            // Gruppenfilter
+            document.querySelectorAll('.group-filter-badge').forEach(badge => {
+                badge.addEventListener('click', () => {
+                    const group = badge.dataset.group;
+                    selectedGroupFilter = group === 'all' ? null : group;
+                    render();
+                });
+            });
+
             document.querySelectorAll('.subtask-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', (e) => {
                     const taskId = parseInt(e.target.dataset.task);

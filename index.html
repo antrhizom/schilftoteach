@@ -1032,7 +1032,10 @@
                 <div class="modal-overlay" id="modalOverlay">
                     <div class="modal-content">
                         <h2>🎉 Aufgabe geschafft!</h2>
-                        <p style="margin-bottom: 25px; color: #666;">${task.title}</p>
+                        <p style="margin-bottom: 15px; color: #666;">${task.title}</p>
+                        <div class="anonymous-note" style="margin-bottom: 25px;">
+                            <strong>🔒 Hinweis:</strong> Deine Bewertungen werden anonymisiert mit anderen Teilnehmern geteilt und in der Statistik sichtbar gemacht.
+                        </div>
                         ${RATING_QUESTIONS.map(q => `
                             <div class="rating-question">
                                 <label>${q.emoji} ${q.label}</label>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weiterbildung to-teach.ai - Checkliste</title>
+    <title>Weiterbildung to-teach.ai</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
@@ -40,6 +40,12 @@
         .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
         .btn-secondary { background: #e0e0e0; color: #333; }
         .error-message { color: #e74c3c; margin-top: 10px; }
+        .success-message { color: #2ecc71; margin-top: 10px; font-weight: 600; }
+        .code-display { background: #fff3e0; border: 3px dashed #f39c12; border-radius: 10px; padding: 20px; text-align: center; margin: 20px 0; }
+        .code-display .code { font-size: 32px; font-weight: 700; color: #f39c12; letter-spacing: 3px; font-family: monospace; }
+        .login-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .login-tab { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; text-align: center; font-weight: 600; transition: all 0.3s; }
+        .login-tab.active { background: #667eea; color: white; border-color: #667eea; }
         .progress-bar-container { margin: 30px 0; }
         .progress-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: 600; }
         .progress-bar { height: 30px; background: #e0e0e0; border-radius: 15px; overflow: hidden; }
@@ -86,6 +92,13 @@
         .stat-emoji { font-size: 36px; margin-bottom: 10px; }
         .stat-value { font-size: 28px; font-weight: 700; color: #667eea; }
         .stat-label { color: #666; font-size: 14px; margin-top: 5px; }
+        .task-stats { margin-top: 30px; }
+        .task-stat-item { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 15px; }
+        .task-stat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .subtask-stats { margin-top: 10px; padding-left: 20px; }
+        .subtask-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0e0; }
+        .stat-bar { height: 20px; background: #e0e0e0; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .stat-bar-fill { height: 100%; transition: width 0.5s; }
         .user-list { margin-top: 30px; }
         .user-row { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
         .user-name { font-weight: 600; display: flex; align-items: center; gap: 10px; }
@@ -116,7 +129,7 @@
     <div id="app"><div class="loading">Lädt...</div></div>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, get, set, push, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, get, set, push, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
         const firebaseConfig = {
             apiKey: "AIzaSyC5WFZHxE19M5lN08cHBD_1P5x2zDuLNHI",
@@ -164,14 +177,20 @@
             { id: 'learned', label: 'Habe ich etwas gelernt?', emoji: '📚' }
         ];
 
+        function generateCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
         let currentUser = null;
         let currentPage = 'login';
+        let loginMode = 'new';
         let completedSubtasks = {};
         let ratings = {};
         let allUsers = [];
         let comments = [];
         let showRatingModal = null;
         let tempRating = {};
+        let newUserCode = null;
 
         async function init() {
             const savedUserId = localStorage.getItem('currentUserId');
@@ -239,7 +258,7 @@
             }
         }
 
-        async function handleLogin(username, group) {
+        async function handleNewUser(username, group) {
             if (!username || !group) return 'Bitte Namen und Gruppe auswählen';
 
             try {
@@ -248,38 +267,61 @@
                 
                 if (snapshot.exists()) {
                     const users = snapshot.val();
-                    const existingUser = Object.entries(users).find(
-                        ([id, u]) => u.username.toLowerCase() === username.toLowerCase()
+                    const exists = Object.values(users).some(
+                        u => u.username.toLowerCase() === username.toLowerCase()
                     );
-                    
-                    if (existingUser) {
-                        const [userId, userData] = existingUser;
-                        currentUser = { ...userData, userId };
-                        localStorage.setItem('currentUserId', userId);
-                        currentPage = 'checkliste';
-                        await loadUserData();
-                        render();
-                        return null;
+                    if (exists) {
+                        return 'Dieser Name ist bereits vergeben';
                     }
                 }
 
+                const code = generateCode();
                 const userId = Date.now().toString();
                 const newUser = {
                     username: username.trim(),
                     group: group,
+                    code: code,
                     createdAt: new Date().toISOString(),
                     completedSubtasks: {},
                     ratings: {}
                 };
 
                 await set(ref(database, `users/${userId}`), newUser);
-                currentUser = { ...newUser, userId };
-                localStorage.setItem('currentUserId', userId);
-                currentPage = 'checkliste';
-                completedSubtasks = {};
-                ratings = {};
+                newUserCode = code;
                 render();
                 return null;
+            } catch (err) {
+                console.error(err);
+                return 'Fehler beim Erstellen des Accounts';
+            }
+        }
+
+        async function handleExistingUser(code) {
+            if (!code) return 'Bitte Code eingeben';
+
+            try {
+                const usersRef = ref(database, 'users');
+                const snapshot = await get(usersRef);
+                
+                if (snapshot.exists()) {
+                    const users = snapshot.val();
+                    const foundUser = Object.entries(users).find(
+                        ([id, u]) => u.code && u.code.toUpperCase() === code.toUpperCase()
+                    );
+                    
+                    if (foundUser) {
+                        const [userId, userData] = foundUser;
+                        currentUser = { ...userData, userId };
+                        localStorage.setItem('currentUserId', userId);
+                        currentPage = 'checkliste';
+                        await loadUserData();
+                        render();
+                        return null;
+                    } else {
+                        return 'Code nicht gefunden';
+                    }
+                }
+                return 'Code nicht gefunden';
             } catch (err) {
                 console.error(err);
                 return 'Fehler beim Anmelden';
@@ -293,6 +335,7 @@
                 currentPage = 'login';
                 completedSubtasks = {};
                 ratings = {};
+                newUserCode = null;
                 render();
             }
         }
@@ -401,39 +444,121 @@
         }
 
         function renderLogin() {
+            if (newUserCode) {
+                return `
+                    <div class="container">
+                        <div class="card" style="max-width: 600px; margin: 50px auto;">
+                            <h1>🎉 Account erstellt!</h1>
+                            <p style="margin-bottom: 20px; color: #666;">
+                                Dein persönlicher Code zum Anmelden:
+                            </p>
+                            <div class="code-display">
+                                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Notiere dir diesen Code:</div>
+                                <div class="code">${newUserCode}</div>
+                                <div style="font-size: 14px; color: #666; margin-top: 10px;">
+                                    Du benötigst ihn zum Anmelden auf anderen Geräten
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%;" onclick="location.reload()">
+                                Weiter zur Checkliste
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
             return `
                 <div class="container">
                     <div class="card" style="max-width: 600px; margin: 50px auto;">
                         <h1>🎓 Willkommen zur to-teach.ai Weiterbildung</h1>
                         <p style="margin-bottom: 30px; color: #666;">
-                            Melde dich an - du kannst dich auch von anderen Geräten mit dem gleichen Namen anmelden.
+                            Bist du neu hier oder hast du bereits einen Code?
                         </p>
-                        <form id="loginForm">
-                            <div class="form-group">
-                                <label>Dein Name</label>
-                                <input type="text" id="username" placeholder="Max Mustermann" maxlength="30" required>
+                        <div class="login-tabs">
+                            <div class="login-tab ${loginMode === 'new' ? 'active' : ''}" data-mode="new">
+                                ✨ Neu registrieren
                             </div>
-                            <div class="form-group">
-                                <label>Wähle deine Gruppe (klicke auf ein Tier)</label>
-                                <div class="group-grid">
-                                    ${Object.entries(GROUPS).map(([id, g]) => `
-                                        <div class="group-option ${id}" data-group="${id}">
-                                            <div style="font-size: 32px; margin-bottom: 5px;">${g.emoji}</div>
-                                            <div>${g.name}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                <input type="hidden" id="selectedGroup" required>
+                            <div class="login-tab ${loginMode === 'existing' ? 'active' : ''}" data-mode="existing">
+                                🔑 Mit Code anmelden
                             </div>
-                            <div id="loginError" class="error-message"></div>
-                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Anmelden</button>
-                        </form>
+                        </div>
+                        <div id="loginContent"></div>
                     </div>
                 </div>
             `;
         }
 
+        function renderNewUserForm() {
+            return `
+                <form id="newUserForm">
+                    <div class="form-group">
+                        <label>Dein Name (nur einmal verwendbar)</label>
+                        <input type="text" id="username" placeholder="Max Mustermann" maxlength="30" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Wähle deine Gruppe</label>
+                        <div class="group-grid">
+                            ${Object.entries(GROUPS).map(([id, g]) => `
+                                <div class="group-option ${id}" data-group="${id}">
+                                    <div style="font-size: 32px; margin-bottom: 5px;">${g.emoji}</div>
+                                    <div>${g.name}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <input type="hidden" id="selectedGroup" required>
+                    </div>
+                    <div id="loginError" class="error-message"></div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                        Account erstellen
+                    </button>
+                </form>
+            `;
+        }
+
+        function renderExistingUserForm() {
+            return `
+                <form id="existingUserForm">
+                    <div class="form-group">
+                        <label>Dein persönlicher Code</label>
+                        <input type="text" id="userCode" placeholder="ABC123" maxlength="6" required 
+                               style="text-transform: uppercase; text-align: center; font-size: 24px; letter-spacing: 3px; font-family: monospace;">
+                    </div>
+                    <div id="loginError" class="error-message"></div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
+                        Anmelden
+                    </button>
+                </form>
+            `;
+        }
+
         function attachLoginListeners() {
+            document.querySelectorAll('.login-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    loginMode = tab.dataset.mode;
+                    const content = document.getElementById('loginContent');
+                    if (loginMode === 'new') {
+                        content.innerHTML = renderNewUserForm();
+                        attachNewUserListeners();
+                    } else {
+                        content.innerHTML = renderExistingUserForm();
+                        attachExistingUserListeners();
+                    }
+                    document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                });
+            });
+
+            const content = document.getElementById('loginContent');
+            if (loginMode === 'new') {
+                content.innerHTML = renderNewUserForm();
+                attachNewUserListeners();
+            } else {
+                content.innerHTML = renderExistingUserForm();
+                attachExistingUserListeners();
+            }
+        }
+
+        function attachNewUserListeners() {
             let selectedGroup = null;
             document.querySelectorAll('.group-option').forEach(opt => {
                 opt.addEventListener('click', () => {
@@ -444,12 +569,27 @@
                 });
             });
             
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            document.getElementById('newUserForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const username = document.getElementById('username').value;
                 const group = document.getElementById('selectedGroup').value;
                 const errorDiv = document.getElementById('loginError');
-                const error = await handleLogin(username, group);
+                const error = await handleNewUser(username, group);
+                if (error) errorDiv.textContent = error;
+            });
+        }
+
+        function attachExistingUserListeners() {
+            const codeInput = document.getElementById('userCode');
+            codeInput.addEventListener('input', (e) => {
+                e.target.value = e.target.value.toUpperCase();
+            });
+
+            document.getElementById('existingUserForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const code = document.getElementById('userCode').value;
+                const errorDiv = document.getElementById('loginError');
+                const error = await handleExistingUser(code);
                 if (error) errorDiv.textContent = error;
             });
         }
@@ -466,6 +606,7 @@
                         <div class="user-info">
                             <span style="font-weight: 600;">${currentUser.username}</span>
                             <span class="group-badge ${currentUser.group}">${GROUPS[currentUser.group]?.emoji} ${GROUPS[currentUser.group]?.name}</span>
+                            <span style="font-size: 12px; color: #999;">Code: ${currentUser.code}</span>
                             <button class="logout-btn" id="logoutBtn">Abmelden</button>
                         </div>
                     </nav>
@@ -585,7 +726,7 @@
                 const avgProgress = totalSubtasks > 0 ? Math.round((totalSubtasksCompleted / totalSubtasks) * 100) : 0;
                 groupStats[g] = { count: groupUsers.length, progress: avgProgress };
             });
-            
+
             let allSubtasksCount = 0;
             TASKS.forEach(t => allSubtasksCount += t.subtasks.length);
             
@@ -606,6 +747,57 @@
                             `).join('')}
                         </div>
                     </div>
+
+                    <div class="card">
+                        <h2>📈 Detaillierte Aufgabenstatistik</h2>
+                        <div class="task-stats">
+                            ${TASKS.map((task, idx) => {
+                                let taskStats = { total: allUsers.length, completed: 0 };
+                                let subtaskStats = task.subtasks.map(() => ({ total: allUsers.length, completed: 0 }));
+                                
+                                allUsers.forEach(user => {
+                                    let userTaskCompleted = true;
+                                    task.subtasks.forEach((_, subIdx) => {
+                                        const key = getSubtaskKey(task.id, subIdx);
+                                        if (user.completedSubtasks && user.completedSubtasks[key]) {
+                                            subtaskStats[subIdx].completed++;
+                                        } else {
+                                            userTaskCompleted = false;
+                                        }
+                                    });
+                                    if (userTaskCompleted) taskStats.completed++;
+                                });
+
+                                const taskPercentage = taskStats.total > 0 ? Math.round((taskStats.completed / taskStats.total) * 100) : 0;
+
+                                return `
+                                    <div class="task-stat-item">
+                                        <div class="task-stat-header">
+                                            <strong>${idx + 1}. ${task.title}</strong>
+                                            <span style="color: #667eea; font-weight: 600;">${taskStats.completed}/${taskStats.total} (${taskPercentage}%)</span>
+                                        </div>
+                                        <div class="stat-bar">
+                                            <div class="stat-bar-fill" style="width: ${taskPercentage}%; background: ${GROUPS[Object.keys(GROUPS)[idx % 5]].color};"></div>
+                                        </div>
+                                        <div class="subtask-stats">
+                                            ${task.subtasks.map((subtask, subIdx) => {
+                                                const subPercentage = subtaskStats[subIdx].total > 0 
+                                                    ? Math.round((subtaskStats[subIdx].completed / subtaskStats[subIdx].total) * 100) 
+                                                    : 0;
+                                                return `
+                                                    <div class="subtask-stat">
+                                                        <span style="font-size: 14px;">${subtask}</span>
+                                                        <span style="font-weight: 600; color: #666;">${subtaskStats[subIdx].completed}/${subtaskStats[subIdx].total} (${subPercentage}%)</span>
+                                                    </div>
+                                                `;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+
                     <div class="card">
                         <h2>👥 Alle Teilnehmer (${allUsers.length})</h2>
                         <div class="user-list">

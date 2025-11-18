@@ -87,9 +87,10 @@
         .rating-btn.selected { color: white; border-color: transparent; transform: scale(1.05); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
         .rating-btn-emoji { font-size: 24px; }
         .rating-btn-label { font-size: 13px; }
-        .external-links { display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e0e0e0; }
+        .external-links { display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e0e0e0; flex-wrap: wrap; }
         .external-link-btn { padding: 10px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.3s; border: 2px solid; }
         .external-link-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); }
+        .external-link-btn.pdf { background: #f3e5f5; color: #9b59b6; border-color: #9b59b6; }
         .external-link-btn.whiteboard { background: #e3f2fd; color: #1976d2; border-color: #1976d2; }
         .external-link-btn.padlet { background: #fff3e0; color: #f57c00; border-color: #f57c00; }
         .modal-actions { display: flex; gap: 15px; margin-top: 30px; }
@@ -148,6 +149,8 @@
             .task-icon { width: 50px; height: 50px; font-size: 28px; }
             .rating-options, .modal-actions { flex-direction: column; }
             .modal-actions button { width: 100%; }
+            .external-links { flex-direction: column; }
+            .external-link-btn { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -180,27 +183,39 @@
 
         const TASKS = [
             { id: 1, title: 'Ein KI-Chatbot steht zur Verfügung', type: 'individual', lionColor: 'lion-red', lionEmoji: '🦁',
-              subtasks: ['Ich habe Zugriff auf den KI-Chat von Microsoft', 'Ich weiss, dass ich den Input genau definieren muss'] },
+              subtasks: ['Ich habe Zugriff auf den KI-Chat von Microsoft', 'Ich weiss, dass ich den Input genau definieren muss'],
+              pdfUrl: './public/pdfs/aufgabe-1-ki-chatbot.pdf' },
+            
             { id: 2, title: 'Registrierung Schullizenz', type: 'individual', lionColor: 'lion-blue', lionEmoji: '🦁',
-              subtasks: ['Ich bin bei Fobizz registriert', 'Ich habe den Pro-Plan in to-teach.ai'] },
+              subtasks: ['Ich bin bei Fobizz registriert', 'Ich habe den Pro-Plan in to-teach.ai'],
+              pdfUrl: './public/pdfs/aufgabe-2-registrierung.pdf' },
+            
             { id: 3, title: 'Erste Schritte in to-teach.ai', type: 'individual', lionColor: 'lion-green', lionEmoji: '🦁',
-              subtasks: ['Ich habe ein Youtube-Aufgabenblatt erstellt', 'Ich habe eine Powerpoint erstellt', 'Ich habe eine Infografik erstellt'] },
+              subtasks: ['Ich habe ein Youtube-Aufgabenblatt erstellt', 'Ich habe eine Powerpoint erstellt', 'Ich habe eine Infografik erstellt'],
+              pdfUrl: './public/pdfs/aufgabe-3-erste-schritte.pdf' },
+            
             { id: 4, title: 'Gruppenarbeit A', type: 'group', lionColor: 'lion-orange', lionEmoji: '👥',
               subtasks: ['Zwischenstandkontrolle in der Gruppe', 'Einzellinks sind auf dem Whiteboard festgehalten'],
-              whiteboardUrl: 'https://bbwch-my.sharepoint.com/:wb:/g/personal/christof_glaus_bbw_ch/EYKm26ltu_1Aj964USKOgGwBH8e2BXjLHEZgXXDh-unrnw?e=XKFcjx',
+              whiteboardUrl: '',
               padletUrl: '' },
+            
             { id: 5, title: 'Aufgabenbausteine kennenlernen', type: 'individual', lionColor: 'lion-purple', lionEmoji: '🦁',
-              subtasks: ['Ich habe den Baustein „Aussagen" erstellt', 'Ich habe den Baustein „Mindmap" erstellt', 'Ich habe den Baustein „Whatsapp Chat" erstellt'] },
+              subtasks: ['Ich habe den Baustein „Aussagen" erstellt', 'Ich habe den Baustein „Mindmap" erstellt', 'Ich habe den Baustein „Whatsapp Chat" erstellt'],
+              pdfUrl: './public/pdfs/aufgabe-5-bausteine.pdf' },
+            
             { id: 6, title: 'Organisation von to-teach.ai-Inhalten', type: 'individual', lionColor: 'lion-yellow', lionEmoji: '🦁',
-              subtasks: ['Ich habe zwei Ordner erstellt', 'Ich habe einen Kurs erstellt'] },
+              subtasks: ['Ich habe zwei Ordner erstellt', 'Ich habe einen Kurs erstellt'],
+              pdfUrl: './public/pdfs/aufgabe-6-organisation.pdf' },
+            
             { id: 7, title: 'Gruppenarbeit B', type: 'group', lionColor: 'lion-teal', lionEmoji: '👥',
               subtasks: ['Zwischenstandkontrolle in der Gruppe', 'Einzellinks sind auf dem Whiteboard festgehalten'],
-              whiteboardUrl: 'https://bbwch-my.sharepoint.com/:wb:/g/personal/christof_glaus_bbw_ch/EYKm26ltu_1Aj964USKOgGwBH8e2BXjLHEZgXXDh-unrnw?e=XKFcjx',
+              whiteboardUrl: '',
               padletUrl: '' },
+            
             { id: 8, title: 'Gruppenarbeit C', type: 'group', lionColor: 'lion-pink', lionEmoji: '👥',
               subtasks: ['Entscheid in der Gruppe, welche Links auf das Padlet kommen', 'Mindestens fünf Links mit Begründung'],
               whiteboardUrl: '',
-              padletUrl: 'https://padlet.com/bbwspace/ergebnisse-des-to-teach-ai-workshops-3j5elmig9cw1c7lf' }
+              padletUrl: '' }
         ];
 
         const RATING_QUESTIONS = [
@@ -230,7 +245,7 @@
         let showRatingModal = null;
         let tempRating = {};
         let newUserCode = null;
-        let selectedGroupFilter = null; // null = alle Gruppen
+        let selectedGroupFilter = null;
 
         async function init() {
             const savedUserId = localStorage.getItem('currentUserId');
@@ -328,7 +343,6 @@
 
                 await set(ref(database, `users/${userId}`), newUser);
                 
-                // Speichere den Code temporär und den User
                 newUserCode = code;
                 currentUser = { ...newUser, userId };
                 
@@ -480,9 +494,7 @@
                 app.innerHTML = renderLogin();
                 attachLoginListeners();
             } else if (newUserCode) {
-                // Zeige Code-Anzeige
                 app.innerHTML = renderLogin();
-                // Füge Listener für Continue-Button hinzu
                 document.getElementById('continueToApp')?.addEventListener('click', () => {
                     localStorage.setItem('currentUserId', currentUser.userId);
                     newUserCode = null;
@@ -744,8 +756,13 @@
                                                 `;
                                             }).join('')}
                                         </div>
-                                        ${(task.whiteboardUrl || task.padletUrl) ? `
+                                        ${(task.pdfUrl || task.whiteboardUrl || task.padletUrl) ? `
                                             <div class="external-links">
+                                                ${task.pdfUrl ? `
+                                                    <a href="${task.pdfUrl}" target="_blank" class="external-link-btn pdf">
+                                                        📄 Anleitung öffnen
+                                                    </a>
+                                                ` : ''}
                                                 ${task.whiteboardUrl ? `
                                                     <a href="${task.whiteboardUrl}" target="_blank" class="external-link-btn whiteboard">
                                                         🖼️ Whiteboard öffnen
@@ -779,7 +796,6 @@
         }
 
         function renderStatistik() {
-            // Filtere Benutzer basierend auf ausgewählter Gruppe
             const filteredUsers = selectedGroupFilter 
                 ? allUsers.filter(u => u.group === selectedGroupFilter)
                 : allUsers;
@@ -853,9 +869,8 @@
                                 let taskStats = { total: filteredUsers.length, completed: 0 };
                                 let subtaskStats = task.subtasks.map(() => ({ total: filteredUsers.length, completed: 0 }));
                                 
-                                // Sammle Bewertungen für diese Aufgabe
                                 let ratingStats = {
-                                    enjoyed: { values: [0, 0, 0, 0], total: 0 }, // [Gar nicht, Eher nein, Eher ja, Sehr]
+                                    enjoyed: { values: [0, 0, 0, 0], total: 0 },
                                     useful: { values: [0, 0, 0, 0], total: 0 },
                                     learned: { values: [0, 0, 0, 0], total: 0 }
                                 };
@@ -872,7 +887,6 @@
                                     });
                                     if (userTaskCompleted) taskStats.completed++;
 
-                                    // Sammle Bewertungen
                                     if (user.ratings && user.ratings[task.id]) {
                                         const rating = user.ratings[task.id];
                                         RATING_QUESTIONS.forEach(q => {
@@ -1010,6 +1024,9 @@
                                         </div>
                                         <div>
                                             <span class="comment-date">${new Date(comment.timestamp).toLocaleString('de-DE')}</span>
+                                            ${comment.userId === currentUser.userId ? `
+                                                <button class="delete-comment-btn" data-comment="${comment.id}">Löschen</button>
+                                            ` : ''}
                                         </div>
                                     </div>
                                     <div class="comment-text">${comment.text}</div>
@@ -1059,7 +1076,6 @@
         }
 
         function attachContentListeners() {
-            // Gruppenfilter
             document.querySelectorAll('.group-filter-badge').forEach(badge => {
                 badge.addEventListener('click', () => {
                     const group = badge.dataset.group;
@@ -1090,6 +1106,12 @@
                     postComment(text);
                     document.getElementById('newComment').value = '';
                 }
+            });
+
+            document.querySelectorAll('.delete-comment-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    deleteComment(btn.dataset.comment);
+                });
             });
         }
 
